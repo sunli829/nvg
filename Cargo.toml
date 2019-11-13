@@ -1,6 +1,6 @@
 [package]
 name = "nvg"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Sunli <scott_s829@163.com>"]
 edition = "2018"
 keywords = ["nanovg", "opengl"]
@@ -8,6 +8,7 @@ description = "Pure-rust implementation of NanoVG"
 license = "MIT"
 publish = true
 homepage = "https://github.com/sunli829/nvg"
+repository = "https://github.com/sunli829/nvg"
 
 [dependencies]
 bitflags = "1.2.1"
@@ -16,6 +17,8 @@ failure = "0.1.6"
 rusttype = { version = "0.8.1", features = ["gpu_cache"] }
 slab = "0.4.2"
 num-traits = "0.2.8"
+clamped = "1.0.0"
+rawpointer = "0.2.1"
 
 [workspace]
 members = [

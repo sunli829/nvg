@@ -8,9 +8,10 @@ description = "NVG Renderer for OpenGL"
 license = "MIT"
 publish = true
 homepage = "https://github.com/sunli829/nvg"
+repository = "https://github.com/sunli829/nvg"
 
 [dependencies]
-nvg = "0.5.0"
+nvg = { version = "0.5.1", path = "../" }
 slab = "0.4.2"
 gl = "0.14.0"
 failure = "0.1.6"

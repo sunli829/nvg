@@ -2,6 +2,7 @@ use crate::cache::PathCache;
 use crate::fonts::{FontId, Fonts, LayoutChar};
 use crate::renderer::{Renderer, Scissor, TextureType};
 use crate::{Color, ErrorKind, Extent, Point, Rect, Result, Transform};
+use clamped::Clamp;
 use failure::ResultExt;
 use std::f32::consts::PI;
 
@@ -1069,11 +1070,11 @@ impl<R: Renderer> Context<R> {
     pub fn stroke(&mut self) -> Result<()> {
         let state = self.states.last_mut().unwrap();
         let scale = state.xform.average_scale();
-        let mut stroke_width = (state.stroke_width * scale).clamp(0.0, 200.0);
+        let mut stroke_width = (state.stroke_width * scale).clamped(0.0, 200.0);
         let mut stroke_paint = state.stroke.clone();
 
         if stroke_width < self.fringe_width {
-            let alpha = (stroke_width / self.fringe_width).clamp(0.0, 1.0);
+            let alpha = (stroke_width / self.fringe_width).clamped(0.0, 1.0);
             stroke_paint.inner_color.a *= alpha * alpha;
             stroke_paint.outer_color.a *= alpha * alpha;
             stroke_width = self.fringe_width;

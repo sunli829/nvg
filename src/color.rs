@@ -1,3 +1,4 @@
+use clamped::Clamp;
 use num_traits::AsPrimitive;
 use std::ops::Rem;
 
@@ -19,7 +20,7 @@ impl Color {
     }
 
     pub fn lerp(self, c: Color, u: f32) -> Color {
-        let u = u.clamp(0.0, 1.0);
+        let u = u.clamped(0.0, 1.0);
         let om = 1.0 - u;
         Color {
             r: self.r * om + c.r * u,
@@ -34,8 +35,8 @@ impl Color {
         if h < 0.0 {
             h += 1.0;
         }
-        let s = s.clamp(0.0, 1.0);
-        let l = l.clamp(0.0, 1.0);
+        let s = s.clamped(0.0, 1.0);
+        let l = l.clamped(0.0, 1.0);
         let m2 = if l <= 0.5 {
             l * (1.0 + s)
         } else {
@@ -43,9 +44,9 @@ impl Color {
         };
         let m1 = 2.0 * l - m2;
         Color {
-            r: hue(h + 1.0 / 3.0, m1, m2).clamp(0.0, 1.0),
-            g: hue(h, m1, m2).clamp(0.0, 1.0),
-            b: hue(h - 1.0 / 3.0, m1, m2).clamp(0.0, 1.0),
+            r: hue(h + 1.0 / 3.0, m1, m2).clamped(0.0, 1.0),
+            g: hue(h, m1, m2).clamped(0.0, 1.0),
+            b: hue(h - 1.0 / 3.0, m1, m2).clamped(0.0, 1.0),
             a,
         }
     }

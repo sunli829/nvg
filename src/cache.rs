@@ -1,5 +1,7 @@
 use crate::context::{Command, Path, Vertex};
 use crate::{Bounds, LineCap, LineJoin, Point, Solidity};
+use clamped::Clamp;
+use rawpointer::ptrdistance;
 use std::f32::consts::PI;
 
 bitflags! {
@@ -512,7 +514,7 @@ impl PathCache {
                     }
                 }
 
-                path.num_stroke = dst.offset_from(vertexes) as usize;
+                path.num_stroke = ptrdistance(vertexes, dst);
                 vertexes = dst;
             }
         }
@@ -601,7 +603,7 @@ impl PathCache {
                     }
                 }
 
-                path.num_fill = dst.offset_from(vertexes) as usize;
+                path.num_fill = ptrdistance(vertexes, dst);
                 vertexes = dst;
 
                 if fringe {
@@ -664,7 +666,7 @@ impl PathCache {
                     *dst = Vertex::new((*v1).x, (*v1).y, ru, 1.0);
                     dst = dst.add(1);
 
-                    path.num_stroke = dst.offset_from(vertexes) as usize;
+                    path.num_stroke = ptrdistance(vertexes, dst);
                     vertexes = dst;
                 } else {
                     path.stroke = std::ptr::null_mut();
@@ -759,7 +761,7 @@ unsafe fn round_join(
         *dst = Vertex::new(p1.xy.x - dlx0 * rw, p1.xy.y - dly0 * rw, ru, 1.0);
         dst = dst.add(1);
 
-        let n = ((((a0 - a1) / PI) * (ncap as f32)).ceil() as i32).clamp(2, ncap as i32);
+        let n = ((((a0 - a1) / PI) * (ncap as f32)).ceil() as i32).clamped(2, ncap as i32);
         for i in 0..n {
             let u = (i as f32) / ((n - 1) as f32);
             let a = a0 + u * (a1 - a0);
@@ -793,7 +795,7 @@ unsafe fn round_join(
         *dst = Vertex::new(rx0, ry0, ru, 1.0);
         dst = dst.add(1);
 
-        let n = ((((a0 - a1) / PI) * (ncap as f32)).ceil() as i32).clamp(2, ncap as i32);
+        let n = ((((a0 - a1) / PI) * (ncap as f32)).ceil() as i32).clamped(2, ncap as i32);
         for i in 0..n {
             let u = (i as f32) / ((n - 1) as f32);
             let a = a0 + u * (a1 - a0);

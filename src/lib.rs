@@ -1,6 +1,3 @@
-#![feature(clamp)]
-#![feature(ptr_offset_from)]
-
 #[macro_use]
 extern crate bitflags;
 

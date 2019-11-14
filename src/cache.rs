@@ -198,7 +198,9 @@ impl PathCache {
 
                 if (*p0).xy.equals((*p1).xy, dist_tol) {
                     path.count -= 1;
-                    p0 = pts.add(path.count - 1);
+                    if path.count > 0 {
+                        p0 = pts.add(path.count - 1);
+                    }
                     path.closed = true;
                 }
 

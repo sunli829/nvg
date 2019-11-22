@@ -193,14 +193,12 @@ impl PathCache {
             for j in 0..self.paths.len() {
                 let path = &mut self.paths[j];
                 let pts = &mut self.points[path.first] as *mut VPoint;
-                let mut p0 = pts.add(path.count - 1);
+                let mut p0 = pts.offset(path.count as isize - 1);
                 let mut p1 = pts;
 
                 if (*p0).xy.equals((*p1).xy, dist_tol) {
                     path.count -= 1;
-                    if path.count > 0 {
-                        p0 = pts.add(path.count - 1);
-                    }
+                    p0 = pts.offset(path.count as isize - 1);
                     path.closed = true;
                 }
 
@@ -241,7 +239,7 @@ impl PathCache {
             for i in 0..self.paths.len() {
                 let path = &mut self.paths[i];
                 let pts = &mut self.points[path.first] as *mut VPoint;
-                let mut p0 = pts.add(path.count - 1);
+                let mut p0 = pts.offset(path.count as isize - 1);
                 let mut p1 = pts;
                 let mut nleft = 0;
 
@@ -361,7 +359,7 @@ impl PathCache {
                 path.stroke = dst;
 
                 let (mut p0, mut p1, s, e) = if loop_ {
-                    (pts.add(path.count - 1), pts, 0, path.count)
+                    (pts.offset(path.count as isize - 1), pts, 0, path.count)
                 } else {
                     (pts, pts.add(1), 1, path.count - 1)
                 };
@@ -559,7 +557,7 @@ impl PathCache {
                 path.fill = dst;
 
                 if fringe {
-                    let mut p0 = pts.add(path.count - 1);
+                    let mut p0 = pts.offset(path.count as isize - 1);
                     let mut p1 = pts;
                     for _ in 0..path.count {
                         if (*p1).flags.contains(PointFlags::PT_BEVEL) {
@@ -621,7 +619,7 @@ impl PathCache {
                         lu = 0.5;
                     }
 
-                    let mut p0 = pts.add(path.count - 1);
+                    let mut p0 = pts.offset(path.count as isize - 1);
                     let mut p1 = pts;
 
                     for _ in 0..path.count {

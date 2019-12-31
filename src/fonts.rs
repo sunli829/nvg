@@ -247,7 +247,7 @@ impl<R: Renderer> Fonts<R> {
                             id,
                             idx,
                             c,
-                            x: dbg!(position.x),
+                            x: position.x,
                             next_x,
                             glyph: glyph.clone(),
                             uv: Default::default(),

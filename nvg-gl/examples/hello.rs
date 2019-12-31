@@ -77,29 +77,29 @@ fn draw<R: nvg::Renderer>(ctx: &mut nvg::Context<R>) {
     // horz align
     ctx.text_align(nvg::Align::LEFT);
     ctx.text((150, 60), "left").unwrap();
-
-    ctx.text_align(nvg::Align::CENTER);
-    ctx.text((150, 80), "center").unwrap();
-
-    ctx.text_align(nvg::Align::RIGHT);
-    ctx.text((150, 100), "right").unwrap();
-
-    // vert align
-    ctx.begin_path();
-    ctx.move_to((5, 270));
-    ctx.line_to((300, 270));
-    ctx.stroke_paint((1.0, 0.0, 0.0));
-    ctx.stroke().unwrap();
-
-    ctx.text_align(nvg::Align::TOP);
-    ctx.text((5, 270), "top").unwrap();
-
-    ctx.text_align(nvg::Align::MIDDLE);
-    ctx.text((50, 270), "middle").unwrap();
-
-    ctx.text_align(nvg::Align::BOTTOM);
-    ctx.text((120, 270), "bottom").unwrap();
-
-    ctx.text_align(nvg::Align::BASELINE);
-    ctx.text((200, 270), "baseline").unwrap();
+//
+//    ctx.text_align(nvg::Align::CENTER);
+//    ctx.text((150, 80), "center").unwrap();
+//
+//    ctx.text_align(nvg::Align::RIGHT);
+//    ctx.text((150, 100), "right").unwrap();
+//
+//    // vert align
+//    ctx.begin_path();
+//    ctx.move_to((5, 270));
+//    ctx.line_to((300, 270));
+//    ctx.stroke_paint((1.0, 0.0, 0.0));
+//    ctx.stroke().unwrap();
+//
+//    ctx.text_align(nvg::Align::TOP);
+//    ctx.text((5, 270), "top").unwrap();
+//
+//    ctx.text_align(nvg::Align::MIDDLE);
+//    ctx.text((50, 270), "middle").unwrap();
+//
+//    ctx.text_align(nvg::Align::BOTTOM);
+//    ctx.text((120, 270), "bottom").unwrap();
+//
+//    ctx.text_align(nvg::Align::BASELINE);
+//    ctx.text((200, 270), "baseline").unwrap();
 }

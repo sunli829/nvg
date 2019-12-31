@@ -235,19 +235,19 @@ impl<R: Renderer> Fonts<R> {
                         y: position.y,
                     });
 
+                    let mut next_x = position.x + h_metrics.advance_width;
+                    if let Some(last_glyph) = last_glyph {
+                        next_x += fd.font.pair_kerning(scale, last_glyph, glyph.id());
+                    }
+
                     if let Some(bb) = glyph.pixel_bounding_box() {
                         self.cache.queue_glyph(id, glyph.clone());
-
-                        let mut next_x = position.x + h_metrics.advance_width;
-                        if let Some(last_glyph) = last_glyph {
-                            next_x += fd.font.pair_kerning(scale, last_glyph, glyph.id());
-                        }
 
                         result.push(LayoutChar {
                             id,
                             idx,
                             c,
-                            x: position.x,
+                            x: dbg!(position.x),
                             next_x,
                             glyph: glyph.clone(),
                             uv: Default::default(),
@@ -256,10 +256,10 @@ impl<R: Renderer> Fonts<R> {
                                 max: (bb.max.x, bb.max.y).into(),
                             },
                         });
-
-                        position.x = next_x;
-                        last_glyph = Some(glyph.id());
                     }
+
+                    position.x = next_x;
+                    last_glyph = Some(glyph.id());
                 }
             }
 

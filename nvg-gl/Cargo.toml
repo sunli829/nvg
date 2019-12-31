@@ -14,7 +14,8 @@ repository = "https://github.com/sunli829/nvg"
 nvg = { version = "0.5.1", path = "../" }
 slab = "0.4.2"
 gl = "0.14.0"
-failure = "0.1.6"
+anyhow = "1.0.26"
 
 [dev-dependencies]
 glutin = "0.21.1"
+chrono = "0.4.10"

@@ -1,8 +1,7 @@
 use crate::context::TextMetrics;
 use crate::renderer::TextureType;
-use crate::{Align, Bounds, ErrorKind, Extent, ImageFlags, Renderer, Result};
+use crate::{Align, Bounds, Extent, ImageFlags, Renderer};
 use bitflags::_core::borrow::Borrow;
-use failure::ResultExt;
 use rusttype::gpu_cache::Cache;
 use rusttype::{Font, Glyph, Point, PositionedGlyph, Scale};
 use slab::Slab;
@@ -38,19 +37,17 @@ pub struct Fonts<R: Renderer> {
 }
 
 impl<R: Renderer> Fonts<R> {
-    pub fn new(renderer: &mut R) -> Result<Fonts<R>> {
+    pub fn new(renderer: &mut R) -> anyhow::Result<Fonts<R>> {
         Ok(Fonts {
             fonts: Default::default(),
             fonts_by_name: Default::default(),
-            img: renderer
-                .create_texture(
-                    TextureType::Alpha,
-                    TEX_WIDTH,
-                    TEX_HEIGHT,
-                    ImageFlags::empty(),
-                    None,
-                )
-                .context(ErrorKind::Renderer)?,
+            img: renderer.create_texture(
+                TextureType::Alpha,
+                TEX_WIDTH,
+                TEX_HEIGHT,
+                ImageFlags::empty(),
+                None,
+            )?,
             cache: Cache::builder()
                 .multithread(true)
                 .dimensions(TEX_WIDTH as u32, TEX_HEIGHT as u32)
@@ -62,8 +59,8 @@ impl<R: Renderer> Fonts<R> {
         &mut self,
         name: N,
         data: D,
-    ) -> Result<FontId> {
-        let font = Font::<'static>::from_bytes(data.into()).context(ErrorKind::Font)?;
+    ) -> anyhow::Result<FontId> {
+        let font = Font::<'static>::from_bytes(data.into())?;
         let fd = FontData {
             font,
             fallback_fonts: Default::default(),
@@ -104,22 +101,20 @@ impl<R: Renderer> Fonts<R> {
         }
     }
 
-    fn render_texture(&mut self, renderer: &mut R) -> Result<()> {
+    fn render_texture(&mut self, renderer: &mut R) -> anyhow::Result<()> {
         let img = self.img.clone();
-        self.cache
-            .cache_queued(move |rect, data| {
-                renderer
-                    .update_texture(
-                        img.clone(),
-                        rect.min.x as usize,
-                        rect.min.y as usize,
-                        (rect.max.x - rect.min.x) as usize,
-                        (rect.max.y - rect.min.y) as usize,
-                        data,
-                    )
-                    .unwrap();
-            })
-            .context(ErrorKind::Font)?;
+        self.cache.cache_queued(move |rect, data| {
+            renderer
+                .update_texture(
+                    img.clone(),
+                    rect.min.x as usize,
+                    rect.min.y as usize,
+                    (rect.max.x - rect.min.x) as usize,
+                    (rect.max.y - rect.min.y) as usize,
+                    data,
+                )
+                .unwrap();
+        })?;
         Ok(())
     }
 
@@ -188,7 +183,7 @@ impl<R: Renderer> Fonts<R> {
         spacing: f32,
         cache: bool,
         result: &mut Vec<LayoutChar>,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         result.clear();
 
         if let Some(fd) = self.fonts.get(id) {

@@ -1,9 +1,8 @@
 use crate::cache::PathCache;
 use crate::fonts::{FontId, Fonts, LayoutChar};
 use crate::renderer::{Renderer, Scissor, TextureType};
-use crate::{Color, ErrorKind, Extent, Point, Rect, Result, Transform};
+use crate::{Color, Extent, Point, Rect, Transform};
 use clamped::Clamp;
-use failure::ResultExt;
 use std::f32::consts::PI;
 
 const KAPPA90: f32 = 0.5522847493;
@@ -484,7 +483,7 @@ pub struct Context<R: Renderer> {
 }
 
 impl<R: Renderer> Context<R> {
-    pub fn create(mut renderer: R) -> Result<Context<R>> {
+    pub fn create(mut renderer: R) -> anyhow::Result<Context<R>> {
         let fonts = Fonts::new(&mut renderer)?;
         Ok(Context {
             renderer,
@@ -516,13 +515,12 @@ impl<R: Renderer> Context<R> {
         &mut self,
         window_extent: E,
         device_pixel_ratio: f32,
-    ) -> Result<()> {
+    ) -> anyhow::Result<()> {
         self.states.clear();
         self.states.push(Default::default());
         self.set_device_pixel_ratio(device_pixel_ratio);
         self.renderer
-            .viewport(window_extent.into(), device_pixel_ratio)
-            .context(ErrorKind::Renderer)?;
+            .viewport(window_extent.into(), device_pixel_ratio)?;
         self.draw_call_count = 0;
         self.fill_triangles_count = 0;
         self.stroke_triangles_count = 0;
@@ -530,13 +528,13 @@ impl<R: Renderer> Context<R> {
         Ok(())
     }
 
-    pub fn cancel_frame(&mut self) -> Result<()> {
-        self.renderer.cancel().context(ErrorKind::Renderer)?;
+    pub fn cancel_frame(&mut self) -> anyhow::Result<()> {
+        self.renderer.cancel()?;
         Ok(())
     }
 
-    pub fn end_frame(&mut self) -> Result<()> {
-        self.renderer.flush().context(ErrorKind::Renderer)?;
+    pub fn end_frame(&mut self) -> anyhow::Result<()> {
+        self.renderer.flush()?;
         Ok(())
     }
 
@@ -617,57 +615,48 @@ impl<R: Renderer> Context<R> {
     }
 
     pub fn stroke_paint<T: Into<Paint<R::ImageHandle>>>(&mut self, paint: T) {
-        self.state_mut().stroke = paint.into();
+        let mut paint = paint.into();
+        paint.xform *= self.state().xform;
+        self.state_mut().stroke = paint;
     }
 
     pub fn fill_paint<T: Into<Paint<R::ImageHandle>>>(&mut self, paint: T) {
-        self.state_mut().fill = paint.into();
+        let mut paint = paint.into();
+        paint.xform *= self.state().xform;
+        self.state_mut().fill = paint;
     }
 
     pub fn create_image<D: AsRef<[u8]>>(
         &mut self,
         flags: ImageFlags,
         data: D,
-    ) -> Result<R::ImageHandle> {
-        let img = image::load_from_memory(data.as_ref()).context(ErrorKind::Image)?;
+    ) -> anyhow::Result<R::ImageHandle> {
+        let img = image::load_from_memory(data.as_ref())?;
         let img = img.to_rgba();
         let dimensions = img.dimensions();
-        let handle = self
-            .renderer
-            .create_texture(
-                TextureType::RGBA,
-                dimensions.0 as usize,
-                dimensions.1 as usize,
-                flags,
-                Some(&img.into_raw()),
-            )
-            .context(ErrorKind::Renderer)?;
+        let handle = self.renderer.create_texture(
+            TextureType::RGBA,
+            dimensions.0 as usize,
+            dimensions.1 as usize,
+            flags,
+            Some(&img.into_raw()),
+        )?;
         Ok(handle)
     }
 
-    pub fn update_image(&mut self, handle: R::ImageHandle, data: &[u8]) -> Result<()> {
-        let (w, h) = self
-            .renderer
-            .texture_size(handle.clone())
-            .context(ErrorKind::Renderer)?;
-        self.renderer
-            .update_texture(handle, 0, 0, w, h, data)
-            .context(ErrorKind::Renderer)?;
+    pub fn update_image(&mut self, handle: R::ImageHandle, data: &[u8]) -> anyhow::Result<()> {
+        let (w, h) = self.renderer.texture_size(handle.clone())?;
+        self.renderer.update_texture(handle, 0, 0, w, h, data)?;
         Ok(())
     }
 
-    pub fn image_size(&self, handle: R::ImageHandle) -> Result<(usize, usize)> {
-        let res = self
-            .renderer
-            .texture_size(handle)
-            .context(ErrorKind::Renderer)?;
+    pub fn image_size(&self, handle: R::ImageHandle) -> anyhow::Result<(usize, usize)> {
+        let res = self.renderer.texture_size(handle)?;
         Ok(res)
     }
 
-    pub fn delete_image(&mut self, handle: R::ImageHandle) -> Result<()> {
-        self.renderer
-            .delete_texture(handle)
-            .context(ErrorKind::Renderer)?;
+    pub fn delete_image(&mut self, handle: R::ImageHandle) -> anyhow::Result<()> {
+        self.renderer.delete_texture(handle)?;
         Ok(())
     }
 
@@ -1028,7 +1017,7 @@ impl<R: Renderer> Context<R> {
         self.ellipse(center.into(), radius, radius);
     }
 
-    pub fn fill(&mut self) -> Result<()> {
+    pub fn fill(&mut self) -> anyhow::Result<()> {
         let state = self.states.last_mut().unwrap();
         let mut fill_paint = state.fill.clone();
 
@@ -1045,16 +1034,14 @@ impl<R: Renderer> Context<R> {
         fill_paint.inner_color.a *= state.alpha;
         fill_paint.outer_color.a *= state.alpha;
 
-        self.renderer
-            .fill(
-                &fill_paint,
-                state.composite_operation,
-                &state.scissor,
-                self.fringe_width,
-                self.cache.bounds,
-                &self.cache.paths,
-            )
-            .context(ErrorKind::Renderer)?;
+        self.renderer.fill(
+            &fill_paint,
+            state.composite_operation,
+            &state.scissor,
+            self.fringe_width,
+            self.cache.bounds,
+            &self.cache.paths,
+        )?;
 
         for path in &self.cache.paths {
             self.fill_triangles_count += path.num_fill - 2;
@@ -1067,7 +1054,7 @@ impl<R: Renderer> Context<R> {
         Ok(())
     }
 
-    pub fn stroke(&mut self) -> Result<()> {
+    pub fn stroke(&mut self) -> anyhow::Result<()> {
         let state = self.states.last_mut().unwrap();
         let scale = state.xform.average_scale();
         let mut stroke_width = (state.stroke_width * scale).clamped(0.0, 200.0);
@@ -1106,16 +1093,14 @@ impl<R: Renderer> Context<R> {
             );
         }
 
-        self.renderer
-            .stroke(
-                &stroke_paint,
-                state.composite_operation,
-                &state.scissor,
-                self.fringe_width,
-                stroke_width,
-                &self.cache.paths,
-            )
-            .context(ErrorKind::Renderer)?;
+        self.renderer.stroke(
+            &stroke_paint,
+            state.composite_operation,
+            &state.scissor,
+            self.fringe_width,
+            stroke_width,
+            &self.cache.paths,
+        )?;
 
         for path in &self.cache.paths {
             self.fill_triangles_count += path.num_stroke - 2;
@@ -1125,11 +1110,19 @@ impl<R: Renderer> Context<R> {
         Ok(())
     }
 
+    pub fn create_font_from_file<N: Into<String>, P: AsRef<std::path::Path>>(
+        &mut self,
+        name: N,
+        path: P,
+    ) -> anyhow::Result<FontId> {
+        self.create_font(name, std::fs::read(path)?)
+    }
+
     pub fn create_font<N: Into<String>, D: Into<Vec<u8>>>(
         &mut self,
         name: N,
         data: D,
-    ) -> Result<FontId> {
+    ) -> anyhow::Result<FontId> {
         self.fonts.add_font(name, data)
     }
 
@@ -1173,7 +1166,7 @@ impl<R: Renderer> Context<R> {
         }
     }
 
-    pub fn text<S: AsRef<str>, P: Into<Point>>(&mut self, pt: P, text: S) -> Result<()> {
+    pub fn text<S: AsRef<str>, P: Into<Point>>(&mut self, pt: P, text: S) -> anyhow::Result<()> {
         let state = self.states.last().unwrap();
         let scale = state.xform.font_scale() * self.device_pixel_ratio;
         let invscale = 1.0 / scale;
@@ -1225,14 +1218,12 @@ impl<R: Renderer> Context<R> {
         paint.inner_color.a *= state.alpha;
         paint.outer_color.a *= state.alpha;
 
-        self.renderer
-            .triangles(
-                &paint,
-                state.composite_operation,
-                &state.scissor,
-                &self.cache.vertexes,
-            )
-            .context(ErrorKind::Renderer)?;
+        self.renderer.triangles(
+            &paint,
+            state.composite_operation,
+            &state.scissor,
+            &self.cache.vertexes,
+        )?;
         Ok(())
     }
 

@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate failure;
+extern crate anyhow;
 
 use nvg::renderer::*;
 use slab::Slab;
@@ -25,7 +25,7 @@ impl Drop for Shader {
 }
 
 impl Shader {
-    unsafe fn load() -> RendererResult<Shader> {
+    unsafe fn load() -> anyhow::Result<Shader> {
         let mut status: gl::types::GLint = std::mem::zeroed();
         let prog = gl::CreateProgram();
         let vert = gl::CreateShader(gl::VERTEX_SHADER);
@@ -197,7 +197,7 @@ impl Drop for Renderer {
 }
 
 impl Renderer {
-    pub fn create() -> RendererResult<Renderer> {
+    pub fn create() -> anyhow::Result<Renderer> {
         unsafe {
             let shader = Shader::load()?;
 
@@ -478,7 +478,7 @@ impl renderer::Renderer for Renderer {
         height: usize,
         flags: ImageFlags,
         data: Option<&[u8]>,
-    ) -> RendererResult<Self::ImageHandle> {
+    ) -> anyhow::Result<Self::ImageHandle> {
         let tex = unsafe {
             let mut tex: gl::types::GLuint = std::mem::zeroed();
             gl::GenTextures(1, &mut tex);
@@ -580,13 +580,13 @@ impl renderer::Renderer for Renderer {
         Ok(id)
     }
 
-    fn delete_texture(&mut self, handle: Self::ImageHandle) -> RendererResult<()> {
+    fn delete_texture(&mut self, handle: Self::ImageHandle) -> anyhow::Result<()> {
         if let Some(texture) = self.textures.get(handle) {
             unsafe { gl::DeleteTextures(1, &texture.tex) }
             self.textures.remove(handle);
             Ok(())
         } else {
-            Err(RendererError::TextureNotFound)
+            bail!("texture '{}' not found", handle);
         }
     }
 
@@ -598,7 +598,7 @@ impl renderer::Renderer for Renderer {
         width: usize,
         height: usize,
         data: &[u8],
-    ) -> RendererResult<()> {
+    ) -> anyhow::Result<()> {
         if let Some(texture) = self.textures.get(handle) {
             unsafe {
                 gl::BindTexture(gl::TEXTURE_2D, texture.tex);
@@ -634,24 +634,24 @@ impl renderer::Renderer for Renderer {
             }
             Ok(())
         } else {
-            Err(RendererError::TextureNotFound)
+            bail!("texture '{}' not found", handle);
         }
     }
 
-    fn texture_size(&self, handle: Self::ImageHandle) -> RendererResult<(usize, usize)> {
+    fn texture_size(&self, handle: Self::ImageHandle) -> anyhow::Result<(usize, usize)> {
         if let Some(texture) = self.textures.get(handle) {
             Ok((texture.width, texture.height))
         } else {
-            Err(RendererError::TextureNotFound)
+            bail!("texture '{}' not found", handle);
         }
     }
 
-    fn viewport(&mut self, extent: Extent, _device_pixel_ratio: f32) -> RendererResult<()> {
+    fn viewport(&mut self, extent: Extent, _device_pixel_ratio: f32) -> anyhow::Result<()> {
         self.view = extent;
         Ok(())
     }
 
-    fn cancel(&mut self) -> RendererResult<()> {
+    fn cancel(&mut self) -> anyhow::Result<()> {
         self.vertexes.clear();
         self.paths.clear();
         self.calls.clear();
@@ -659,7 +659,7 @@ impl renderer::Renderer for Renderer {
         Ok(())
     }
 
-    fn flush(&mut self) -> RendererResult<()> {
+    fn flush(&mut self) -> anyhow::Result<()> {
         if !self.calls.is_empty() {
             unsafe {
                 gl::UseProgram(self.shader.prog);
@@ -764,7 +764,7 @@ impl renderer::Renderer for Renderer {
         fringe: f32,
         bounds: Bounds,
         paths: &[Path],
-    ) -> RendererResult<()> {
+    ) -> anyhow::Result<()> {
         let mut call = Call {
             call_type: CallType::Fill,
             image: paint.image,
@@ -843,7 +843,7 @@ impl renderer::Renderer for Renderer {
         fringe: f32,
         stroke_width: f32,
         paths: &[Path],
-    ) -> RendererResult<()> {
+    ) -> anyhow::Result<()> {
         let mut call = Call {
             call_type: CallType::Stroke,
             image: paint.image,
@@ -894,7 +894,7 @@ impl renderer::Renderer for Renderer {
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         vertexes: &[Vertex],
-    ) -> RendererResult<()> {
+    ) -> anyhow::Result<()> {
         let call = Call {
             call_type: CallType::Triangles,
             image: paint.image,
@@ -916,7 +916,7 @@ impl renderer::Renderer for Renderer {
     }
 }
 
-fn shader_error(shader: gl::types::GLuint, filename: &str) -> RendererError {
+fn shader_error(shader: gl::types::GLuint, filename: &str) -> anyhow::Error {
     unsafe {
         let mut data: [gl::types::GLchar; 512 + 1] = std::mem::zeroed();
         let mut len: gl::types::GLsizei = std::mem::zeroed();
@@ -926,15 +926,15 @@ fn shader_error(shader: gl::types::GLuint, filename: &str) -> RendererError {
         }
         data[len as usize] = 0;
         let err_msg = std::ffi::CStr::from_ptr(data.as_ptr());
-        RendererError::SystemError(format_err!(
+        anyhow!(
             "failed to compile shader: {}: {}",
             filename,
             err_msg.to_string_lossy()
-        ))
+        )
     }
 }
 
-fn program_error(prog: gl::types::GLuint) -> RendererError {
+fn program_error(prog: gl::types::GLuint) -> anyhow::Error {
     unsafe {
         let mut data: [gl::types::GLchar; 512 + 1] = std::mem::zeroed();
         let mut len: gl::types::GLsizei = std::mem::zeroed();
@@ -944,10 +944,7 @@ fn program_error(prog: gl::types::GLuint) -> RendererError {
         }
         data[len as usize] = 0;
         let err_msg = std::ffi::CStr::from_ptr(data.as_ptr());
-        RendererError::SystemError(format_err!(
-            "failed to link program: {}",
-            err_msg.to_string_lossy()
-        ))
+        anyhow!("failed to link program: {}", err_msg.to_string_lossy())
     }
 }
 

@@ -13,25 +13,6 @@ pub struct Scissor {
     pub extent: Extent,
 }
 
-#[derive(Debug)]
-pub enum RendererError {
-    TextureNotFound,
-    SystemError(failure::Error),
-}
-
-impl std::fmt::Display for RendererError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RendererError::TextureNotFound => write!(f, "texture not found"),
-            RendererError::SystemError(err) => write!(f, "renderer error: {}", err),
-        }
-    }
-}
-
-impl std::error::Error for RendererError {}
-
-pub type RendererResult<T> = std::result::Result<T, RendererError>;
-
 pub trait Renderer
 where
     Self::ImageHandle: Clone,
@@ -47,9 +28,9 @@ where
         height: usize,
         flags: ImageFlags,
         data: Option<&[u8]>,
-    ) -> RendererResult<Self::ImageHandle>;
+    ) -> anyhow::Result<Self::ImageHandle>;
 
-    fn delete_texture(&mut self, handle: Self::ImageHandle) -> RendererResult<()>;
+    fn delete_texture(&mut self, handle: Self::ImageHandle) -> anyhow::Result<()>;
 
     fn update_texture(
         &mut self,
@@ -59,15 +40,15 @@ where
         width: usize,
         height: usize,
         data: &[u8],
-    ) -> RendererResult<()>;
+    ) -> anyhow::Result<()>;
 
-    fn texture_size(&self, handle: Self::ImageHandle) -> RendererResult<(usize, usize)>;
+    fn texture_size(&self, handle: Self::ImageHandle) -> anyhow::Result<(usize, usize)>;
 
-    fn viewport(&mut self, extent: Extent, device_pixel_ratio: f32) -> RendererResult<()>;
+    fn viewport(&mut self, extent: Extent, device_pixel_ratio: f32) -> anyhow::Result<()>;
 
-    fn cancel(&mut self) -> RendererResult<()>;
+    fn cancel(&mut self) -> anyhow::Result<()>;
 
-    fn flush(&mut self) -> RendererResult<()>;
+    fn flush(&mut self) -> anyhow::Result<()>;
 
     fn fill(
         &mut self,
@@ -77,7 +58,7 @@ where
         fringe: f32,
         bounds: Bounds,
         paths: &[Path],
-    ) -> RendererResult<()>;
+    ) -> anyhow::Result<()>;
 
     fn stroke(
         &mut self,
@@ -87,7 +68,7 @@ where
         fringe: f32,
         stroke_width: f32,
         paths: &[Path],
-    ) -> RendererResult<()>;
+    ) -> anyhow::Result<()>;
 
     fn triangles(
         &mut self,
@@ -95,5 +76,5 @@ where
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         vertexes: &[Vertex],
-    ) -> RendererResult<()>;
+    ) -> anyhow::Result<()>;
 }

@@ -19,6 +19,19 @@ impl Color {
         Color { r, g, b, a: 1.0 }
     }
 
+    pub fn rgba_i(r: u8, g: u8, b: u8, a: u8) -> Color {
+        Color {
+            r: r as f32 / 255.0,
+            g: g as f32 / 255.0,
+            b: b as f32 / 255.0,
+            a: a as f32 / 255.0,
+        }
+    }
+
+    pub fn rgb_i(r: u8, g: u8, b: u8) -> Color {
+        Self::rgba_i(r, g, b, 255)
+    }
+
     pub fn lerp(self, c: Color, u: f32) -> Color {
         let u = u.clamped(0.0, 1.0);
         let om = 1.0 - u;

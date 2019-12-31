@@ -13,7 +13,7 @@ repository = "https://github.com/sunli829/nvg"
 [dependencies]
 bitflags = "1.2.1"
 image = "0.22.3"
-failure = "0.1.6"
+anyhow = "1.0.26"
 rusttype = { version = "0.8.1", features = ["gpu_cache"] }
 slab = "0.4.2"
 num-traits = "0.2.8"

@@ -197,7 +197,9 @@ impl PathCache {
                 let mut p1 = pts;
 
                 if (*p0).xy.equals((*p1).xy, dist_tol) {
-                    path.count -= 1;
+                    if path.count > 0 {
+                        path.count -= 1;
+                    }
                     p0 = pts.offset(path.count as isize - 1);
                     path.closed = true;
                 }

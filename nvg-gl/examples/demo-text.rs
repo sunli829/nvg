@@ -5,11 +5,6 @@ mod demo;
 struct DemoText;
 
 impl<R: Renderer> demo::Demo<R> for DemoText {
-    fn init(&mut self, ctx: &mut Context<R>) -> anyhow::Result<()> {
-        ctx.create_font_from_file("roboto", "Roboto-Bold.ttf")?;
-        Ok(())
-    }
-
     fn update(&mut self, _width: f32, _height: f32, ctx: &mut Context<R>) -> anyhow::Result<()> {
         ctx.begin_path();
         ctx.move_to((150, 20));
@@ -17,7 +12,6 @@ impl<R: Renderer> demo::Demo<R> for DemoText {
         ctx.stroke_paint((1.0, 0.0, 0.0));
         ctx.stroke()?;
 
-        ctx.font("roboto");
         ctx.font_size(16.0);
         ctx.fill_paint((1.0, 1.0, 0.0));
 

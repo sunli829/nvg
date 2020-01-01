@@ -545,6 +545,13 @@ impl<R: Renderer> Context<R> {
         }
     }
 
+    pub fn restore(&mut self) {
+        if self.states.len() <= 1 {
+            return;
+        }
+        self.states.pop();
+    }
+
     fn state(&mut self) -> &State<R> {
         self.states.last().unwrap()
     }

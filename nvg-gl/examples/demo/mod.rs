@@ -1,7 +1,9 @@
-use nvg::{Context, Renderer};
+use nvg::{Align, Color, Context, Renderer};
+use std::time::Instant;
 
 pub trait Demo<R: Renderer> {
-    fn init(&mut self, _ctx: &mut Context<R>) -> anyhow::Result<()> {
+    fn init(&mut self, ctx: &mut Context<R>) -> anyhow::Result<()> {
+        ctx.create_font_from_file("roboto", "nvg-gl/examples/Roboto-Bold.ttf")?;
         Ok(())
     }
 
@@ -26,6 +28,8 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
     demo.init(&mut context)?;
 
     let mut loop_ = true;
+    let mut total_frames = 0;
+    let start_time = Instant::now();
 
     while loop_ {
         el.poll_events(|event| match event {
@@ -72,6 +76,19 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
             .unwrap();
         demo.update(size.width as f32, size.height as f32, &mut context)
             .unwrap();
+
+        context.save();
+        total_frames += 1;
+        let fps = (total_frames as f32) / (Instant::now() - start_time).as_secs_f32();
+        context.fill_paint(Color::rgb(1.0, 0.0, 0.0));
+        context.font("roboto");
+        context.font_size(20.0);
+        context.begin_path();
+        context.text_align(Align::TOP | Align::LEFT);
+        context.text((10, 10), format!("FPS: {:.2}", fps)).unwrap();
+        context.fill().unwrap();
+        context.restore();
+
         context.end_frame().unwrap();
 
         windowed_context.swap_buffers().unwrap();

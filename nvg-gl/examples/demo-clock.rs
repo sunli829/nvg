@@ -7,14 +7,7 @@ mod demo;
 struct DemoClock;
 
 impl<R: Renderer> demo::Demo<R> for DemoClock {
-    fn init(&mut self, ctx: &mut Context<R>) -> anyhow::Result<()> {
-        ctx.create_font_from_file("roboto", "nvg-gl/examples/Roboto-Bold.ttf")?;
-        Ok(())
-    }
-
     fn update(&mut self, width: f32, height: f32, ctx: &mut Context<R>) -> anyhow::Result<()> {
-        ctx.font("roboto");
-
         let dt: DateTime<Local> = Local::now();
         let hour = dt.hour();
         let am = hour < 12;

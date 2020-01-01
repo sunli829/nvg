@@ -1044,7 +1044,9 @@ impl<R: Renderer> Context<R> {
         )?;
 
         for path in &self.cache.paths {
-            self.fill_triangles_count += path.num_fill - 2;
+            if path.num_fill > 2 {
+                self.fill_triangles_count += path.num_fill - 2;
+            }
             if path.num_stroke > 2 {
                 self.fill_triangles_count += path.num_stroke - 2;
             }

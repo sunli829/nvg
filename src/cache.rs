@@ -891,6 +891,9 @@ unsafe fn bevel_join(
         *dst = Vertex::new(p1.xy.x + dlx0 * lw, p1.xy.y + dly0 * lw, lu, 1.0);
         dst = dst.add(1);
 
+        *dst = Vertex::new(rx0, ry0, ru, 1.0);
+        dst = dst.add(1);
+
         if p1.flags.contains(PointFlags::PT_BEVEL) {
             *dst = Vertex::new(p1.xy.x + dlx0 * lw, p1.xy.y + dly0 * lw, lu, 1.0);
             dst = dst.add(1);

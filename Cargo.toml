@@ -1,6 +1,6 @@
 [package]
 name = "nvg"
-version = "0.5.6"
+version = "0.5.7"
 authors = ["Sunli <scott_s829@163.com>"]
 edition = "2018"
 keywords = ["nanovg", "opengl"]

@@ -8,6 +8,8 @@ pub trait Demo<R: Renderer> {
     fn update(&mut self, _width: f32, _height: f32, _ctx: &mut Context<R>) -> anyhow::Result<()> {
         Ok(())
     }
+
+    fn cursor_moved(&mut self, _x: f32, _y: f32) {}
 }
 
 pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
@@ -36,6 +38,9 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
                         width: sz.width,
                         height: sz.height,
                     });
+                }
+                glutin::WindowEvent::CursorMoved { position, .. } => {
+                    demo.cursor_moved(position.x as f32, position.y as f32);
                 }
                 _ => {}
             },

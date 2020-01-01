@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, Local, Timelike};
-use nvg::{Color, Context, Renderer, Transform};
+use nvg::*;
 use std::f32::consts::PI;
 
 mod demo;
@@ -8,7 +8,7 @@ struct DemoClock;
 
 impl<R: Renderer> demo::Demo<R> for DemoClock {
     fn init(&mut self, ctx: &mut Context<R>) -> anyhow::Result<()> {
-        ctx.create_font_from_file("roboto", "Roboto-Bold.ttf")?;
+        ctx.create_font_from_file("roboto", "nvg-gl/examples/Roboto-Bold.ttf")?;
         Ok(())
     }
 
@@ -57,7 +57,7 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
 
             ctx.fill_paint(silver);
             ctx.font_size(font_size);
-            ctx.text_align(nvg::Align::CENTER | nvg::Align::MIDDLE);
+            ctx.text_align(Align::CENTER | Align::MIDDLE);
             ctx.text((x, y), &sigils[h as usize])?;
         }
 
@@ -75,8 +75,8 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
             ctx.transform(Transform::rotate(m * radians_per_sec));
             ctx.move_to((0.0, -ticks_radius));
             ctx.line_to((0.0, -ticks_radius - tick_len));
-            ctx.global_composite_operation(nvg::CompositeOperation::Basic(
-                nvg::BasicCompositeOperation::Lighter,
+            ctx.global_composite_operation(CompositeOperation::Basic(
+                BasicCompositeOperation::Lighter,
             ));
             ctx.stroke_paint(white);
             ctx.stroke_width(tick_width);
@@ -84,7 +84,7 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
         }
 
         ctx.fill_paint(silver);
-        ctx.text_align(nvg::Align::CENTER | nvg::Align::BASELINE);
+        ctx.text_align(Align::CENTER | Align::BASELINE);
         ctx.text(
             (dial_center.0, dial_center.1 + dial_radius * 0.7 - font_size),
             &format!(
@@ -137,10 +137,8 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
         ctx.circle(origin, boss_rad);
         ctx.stroke_width(1.0);
         ctx.stroke_paint(darkgray);
-        ctx.global_composite_operation(nvg::CompositeOperation::Basic(
-            nvg::BasicCompositeOperation::SrcOver,
-        ));
-        ctx.fill_paint(nvg::Gradient::Radial {
+        ctx.global_composite_operation(CompositeOperation::Basic(BasicCompositeOperation::SrcOver));
+        ctx.fill_paint(Gradient::Radial {
             center: origin.into(),
             in_radius: 0.0,
             out_radius: boss_rad,

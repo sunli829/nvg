@@ -1,4 +1,4 @@
-use nvg::{Context, Renderer};
+use nvg::*;
 
 mod demo;
 

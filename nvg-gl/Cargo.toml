@@ -1,6 +1,6 @@
 [package]
 name = "nvg-gl"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Sunli <scott_s829@163.com>"]
 edition = "2018"
 keywords = ["nanovg", "opengl"]
@@ -11,7 +11,7 @@ homepage = "https://github.com/sunli829/nvg"
 repository = "https://github.com/sunli829/nvg"
 
 [dependencies]
-nvg = { version = "0.5.1", path = "../" }
+nvg = { version = "0.5.7", path = "../" }
 slab = "0.4.2"
 gl = "0.14.0"
 anyhow = "1.0.26"
@@ -19,3 +19,5 @@ anyhow = "1.0.26"
 [dev-dependencies]
 glutin = "0.21.1"
 chrono = "0.4.10"
+rand = "0.7.2"
+lazy_static = "1.4.0"

@@ -5,17 +5,19 @@ use crate::{Color, Extent, Point, Rect, Transform};
 use clamped::Clamp;
 use std::f32::consts::PI;
 
+pub type ImageId = usize;
+
 const KAPPA90: f32 = 0.5522847493;
 
 #[derive(Debug, Copy, Clone)]
-pub struct Paint<H: Clone> {
+pub struct Paint {
     pub xform: Transform,
     pub extent: Extent,
     pub radius: f32,
     pub feather: f32,
     pub inner_color: Color,
     pub outer_color: Color,
-    pub image: Option<H>,
+    pub image: Option<ImageId>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -23,8 +25,8 @@ pub enum Gradient {
     Linear {
         start: Point,
         end: Point,
-        inner_color: Color,
-        outer_color: Color,
+        start_color: Color,
+        end_color: Color,
     },
     Radial {
         center: Point,
@@ -43,22 +45,22 @@ pub enum Gradient {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct ImagePattern<H: Clone> {
+pub struct ImagePattern {
     pub center: Point,
     pub size: Extent,
     pub angle: f32,
-    pub handle: H,
+    pub img: ImageId,
     pub alpha: f32,
 }
 
-impl<H: Clone> From<Gradient> for Paint<H> {
+impl From<Gradient> for Paint {
     fn from(grad: Gradient) -> Self {
         match grad {
             Gradient::Linear {
                 start,
                 end,
-                inner_color,
-                outer_color,
+                start_color: inner_color,
+                end_color: outer_color,
             } => {
                 const LARGE: f32 = 1e5;
 
@@ -138,8 +140,8 @@ impl<H: Clone> From<Gradient> for Paint<H> {
     }
 }
 
-impl<H: Clone> From<ImagePattern<H>> for Paint<H> {
-    fn from(pat: ImagePattern<H>) -> Self {
+impl From<ImagePattern> for Paint {
+    fn from(pat: ImagePattern) -> Self {
         let mut xform = Transform::rotate(pat.angle);
         xform.0[4] = pat.center.x;
         xform.0[5] = pat.center.y;
@@ -150,12 +152,12 @@ impl<H: Clone> From<ImagePattern<H>> for Paint<H> {
             feather: 0.0,
             inner_color: Color::rgba(1.0, 1.0, 1.0, pat.alpha),
             outer_color: Color::rgba(1.0, 1.0, 1.0, pat.alpha),
-            image: Some(pat.handle),
+            image: Some(pat.img),
         }
     }
 }
 
-impl<H: Clone, T: Into<Color> + Clone> From<T> for Paint<H> {
+impl<T: Into<Color> + Clone> From<T> for Paint {
     fn from(color: T) -> Self {
         Paint {
             xform: Transform::identity(),
@@ -384,11 +386,12 @@ impl TextMetrics {
     }
 }
 
-struct State<R: Renderer> {
+#[derive(Clone)]
+struct State {
     composite_operation: CompositeOperationState,
     shape_antialias: bool,
-    fill: Paint<R::ImageHandle>,
-    stroke: Paint<R::ImageHandle>,
+    fill: Paint,
+    stroke: Paint,
     stroke_width: f32,
     miter_limit: f32,
     line_join: LineJoin,
@@ -403,30 +406,7 @@ struct State<R: Renderer> {
     font_id: FontId,
 }
 
-impl<R: Renderer> Clone for State<R> {
-    fn clone(&self) -> Self {
-        State {
-            composite_operation: self.composite_operation,
-            shape_antialias: self.shape_antialias,
-            fill: self.fill.clone(),
-            stroke: self.stroke.clone(),
-            stroke_width: self.stroke_width,
-            miter_limit: self.miter_limit,
-            line_join: self.line_join.clone(),
-            line_cap: self.line_cap.clone(),
-            alpha: self.alpha,
-            xform: self.xform.clone(),
-            scissor: self.scissor,
-            font_size: self.font_size,
-            letter_spacing: self.letter_spacing,
-            line_height: self.line_height,
-            text_align: self.text_align,
-            font_id: self.font_id,
-        }
-    }
-}
-
-impl<R: Renderer> Default for State<R> {
+impl Default for State {
     fn default() -> Self {
         State {
             composite_operation: CompositeOperation::Basic(BasicCompositeOperation::SrcOver).into(),
@@ -468,13 +448,13 @@ pub struct Context<R: Renderer> {
     renderer: R,
     commands: Vec<Command>,
     last_position: Point,
-    states: Vec<State<R>>,
+    states: Vec<State>,
     cache: PathCache,
     tess_tol: f32,
     dist_tol: f32,
     fringe_width: f32,
     device_pixel_ratio: f32,
-    fonts: Fonts<R>,
+    fonts: Fonts,
     layout_chars: Vec<LayoutChar>,
     draw_call_count: usize,
     fill_triangles_count: usize,
@@ -552,11 +532,11 @@ impl<R: Renderer> Context<R> {
         self.states.pop();
     }
 
-    fn state(&mut self) -> &State<R> {
+    fn state(&mut self) -> &State {
         self.states.last().unwrap()
     }
 
-    fn state_mut(&mut self) -> &mut State<R> {
+    fn state_mut(&mut self) -> &mut State {
         self.states.last_mut().unwrap()
     }
 
@@ -621,13 +601,13 @@ impl<R: Renderer> Context<R> {
         self.state().xform
     }
 
-    pub fn stroke_paint<T: Into<Paint<R::ImageHandle>>>(&mut self, paint: T) {
+    pub fn stroke_paint<T: Into<Paint>>(&mut self, paint: T) {
         let mut paint = paint.into();
         paint.xform *= self.state().xform;
         self.state_mut().stroke = paint;
     }
 
-    pub fn fill_paint<T: Into<Paint<R::ImageHandle>>>(&mut self, paint: T) {
+    pub fn fill_paint<T: Into<Paint>>(&mut self, paint: T) {
         let mut paint = paint.into();
         paint.xform *= self.state().xform;
         self.state_mut().fill = paint;
@@ -637,7 +617,7 @@ impl<R: Renderer> Context<R> {
         &mut self,
         flags: ImageFlags,
         data: D,
-    ) -> anyhow::Result<R::ImageHandle> {
+    ) -> anyhow::Result<ImageId> {
         let img = image::load_from_memory(data.as_ref())?;
         let img = img.to_rgba();
         let dimensions = img.dimensions();
@@ -651,18 +631,26 @@ impl<R: Renderer> Context<R> {
         Ok(handle)
     }
 
-    pub fn update_image(&mut self, handle: R::ImageHandle, data: &[u8]) -> anyhow::Result<()> {
+    pub fn create_image_from_file<P: AsRef<std::path::Path>>(
+        &mut self,
+        flags: ImageFlags,
+        path: P,
+    ) -> anyhow::Result<ImageId> {
+        self.create_image(flags, std::fs::read(path)?)
+    }
+
+    pub fn update_image(&mut self, handle: ImageId, data: &[u8]) -> anyhow::Result<()> {
         let (w, h) = self.renderer.texture_size(handle.clone())?;
         self.renderer.update_texture(handle, 0, 0, w, h, data)?;
         Ok(())
     }
 
-    pub fn image_size(&self, handle: R::ImageHandle) -> anyhow::Result<(usize, usize)> {
+    pub fn image_size(&self, handle: ImageId) -> anyhow::Result<(usize, usize)> {
         let res = self.renderer.texture_size(handle)?;
         Ok(res)
     }
 
-    pub fn delete_image(&mut self, handle: R::ImageHandle) -> anyhow::Result<()> {
+    pub fn delete_image(&mut self, handle: ImageId) -> anyhow::Result<()> {
         self.renderer.delete_texture(handle)?;
         Ok(())
     }
@@ -720,19 +708,31 @@ impl<R: Renderer> Context<R> {
     }
 
     fn append_command(&mut self, cmd: Command) {
-        let state = self.state();
+        let state = self.states.last().unwrap();
         let xform = &state.xform;
-        let cmd = match cmd {
-            Command::MoveTo(pt) => Command::MoveTo(xform.transform_point(pt)),
-            Command::LineTo(pt) => Command::LineTo(xform.transform_point(pt)),
-            Command::BezierTo(pt1, pt2, pt3) => Command::BezierTo(
-                xform.transform_point(pt1),
-                xform.transform_point(pt2),
-                xform.transform_point(pt3),
-            ),
-            _ => cmd,
-        };
-        self.commands.push(cmd);
+        match cmd {
+            Command::MoveTo(pt) => {
+                self.commands
+                    .push(Command::MoveTo(xform.transform_point(pt)));
+                self.last_position = pt;
+            }
+            Command::LineTo(pt) => {
+                self.commands
+                    .push(Command::LineTo(xform.transform_point(pt)));
+                self.last_position = pt;
+            }
+            Command::BezierTo(pt1, pt2, pt3) => {
+                self.last_position = pt3;
+                self.commands.push(Command::BezierTo(
+                    xform.transform_point(pt1),
+                    xform.transform_point(pt2),
+                    xform.transform_point(pt3),
+                ));
+            }
+            _ => {
+                self.commands.push(cmd);
+            }
+        }
     }
 
     pub fn begin_path(&mut self) {

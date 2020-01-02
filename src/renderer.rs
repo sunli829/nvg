@@ -1,4 +1,4 @@
-pub use crate::context::{CompositeOperationState, Path, Vertex};
+pub use crate::context::{CompositeOperationState, ImageId, Path, Vertex};
 pub use crate::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -13,12 +13,7 @@ pub struct Scissor {
     pub extent: Extent,
 }
 
-pub trait Renderer
-where
-    Self::ImageHandle: Clone,
-{
-    type ImageHandle;
-
+pub trait Renderer {
     fn edge_antialias(&self) -> bool;
 
     fn create_texture(
@@ -28,13 +23,13 @@ where
         height: usize,
         flags: ImageFlags,
         data: Option<&[u8]>,
-    ) -> anyhow::Result<Self::ImageHandle>;
+    ) -> anyhow::Result<ImageId>;
 
-    fn delete_texture(&mut self, handle: Self::ImageHandle) -> anyhow::Result<()>;
+    fn delete_texture(&mut self, handle: ImageId) -> anyhow::Result<()>;
 
     fn update_texture(
         &mut self,
-        handle: Self::ImageHandle,
+        handle: ImageId,
         x: usize,
         y: usize,
         width: usize,
@@ -42,7 +37,7 @@ where
         data: &[u8],
     ) -> anyhow::Result<()>;
 
-    fn texture_size(&self, handle: Self::ImageHandle) -> anyhow::Result<(usize, usize)>;
+    fn texture_size(&self, handle: ImageId) -> anyhow::Result<(usize, usize)>;
 
     fn viewport(&mut self, extent: Extent, device_pixel_ratio: f32) -> anyhow::Result<()>;
 
@@ -52,7 +47,7 @@ where
 
     fn fill(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         fringe: f32,
@@ -62,7 +57,7 @@ where
 
     fn stroke(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         fringe: f32,
@@ -72,7 +67,7 @@ where
 
     fn triangles(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         vertexes: &[Vertex],

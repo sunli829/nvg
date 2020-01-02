@@ -74,8 +74,10 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
                 device_pixel_ratio,
             )
             .unwrap();
+        context.save();
         demo.update(size.width as f32, size.height as f32, &mut context)
             .unwrap();
+        context.restore();
 
         context.save();
         total_frames += 1;

@@ -1,4 +1,4 @@
-use crate::context::TextMetrics;
+use crate::context::{ImageId, TextMetrics};
 use crate::renderer::TextureType;
 use crate::{Align, Bounds, Extent, ImageFlags, Renderer};
 use bitflags::_core::borrow::Borrow;
@@ -29,15 +29,15 @@ struct FontData {
     fallback_fonts: Vec<FontId>,
 }
 
-pub struct Fonts<R: Renderer> {
+pub struct Fonts {
     fonts: Slab<FontData>,
     fonts_by_name: HashMap<String, FontId>,
     cache: Cache<'static>,
-    pub img: R::ImageHandle,
+    pub(crate) img: ImageId,
 }
 
-impl<R: Renderer> Fonts<R> {
-    pub fn new(renderer: &mut R) -> anyhow::Result<Fonts<R>> {
+impl Fonts {
+    pub fn new<R: Renderer>(renderer: &mut R) -> anyhow::Result<Fonts> {
         Ok(Fonts {
             fonts: Default::default(),
             fonts_by_name: Default::default(),
@@ -101,7 +101,7 @@ impl<R: Renderer> Fonts<R> {
         }
     }
 
-    fn render_texture(&mut self, renderer: &mut R) -> anyhow::Result<()> {
+    fn render_texture<R: Renderer>(&mut self, renderer: &mut R) -> anyhow::Result<()> {
         let img = self.img.clone();
         self.cache.cache_queued(move |rect, data| {
             renderer
@@ -172,7 +172,7 @@ impl<R: Renderer> Fonts<R> {
         }
     }
 
-    pub fn layout_text(
+    pub fn layout_text<R: Renderer>(
         &mut self,
         renderer: &mut R,
         text: &str,

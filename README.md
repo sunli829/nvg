@@ -17,3 +17,11 @@ cargo run -p nvg-gl --example demo-cutout
 ```
 
 ![demo-clock](screenshots/cutout.png)
+
+### Draw
+
+```
+cargo run -p nvg-gl --example demo-draw
+```
+
+![demo-clock](screenshots/draw.png)

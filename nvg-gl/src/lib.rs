@@ -372,7 +372,7 @@ impl Renderer {
 
     fn convert_paint(
         &self,
-        paint: &Paint<usize>,
+        paint: &Paint,
         scissor: &Scissor,
         width: f32,
         fringe: f32,
@@ -465,8 +465,6 @@ impl Renderer {
 }
 
 impl renderer::Renderer for Renderer {
-    type ImageHandle = usize;
-
     fn edge_antialias(&self) -> bool {
         true
     }
@@ -478,7 +476,7 @@ impl renderer::Renderer for Renderer {
         height: usize,
         flags: ImageFlags,
         data: Option<&[u8]>,
-    ) -> anyhow::Result<Self::ImageHandle> {
+    ) -> anyhow::Result<ImageId> {
         let tex = unsafe {
             let mut tex: gl::types::GLuint = std::mem::zeroed();
             gl::GenTextures(1, &mut tex);
@@ -580,7 +578,7 @@ impl renderer::Renderer for Renderer {
         Ok(id)
     }
 
-    fn delete_texture(&mut self, handle: Self::ImageHandle) -> anyhow::Result<()> {
+    fn delete_texture(&mut self, handle: ImageId) -> anyhow::Result<()> {
         if let Some(texture) = self.textures.get(handle) {
             unsafe { gl::DeleteTextures(1, &texture.tex) }
             self.textures.remove(handle);
@@ -592,7 +590,7 @@ impl renderer::Renderer for Renderer {
 
     fn update_texture(
         &mut self,
-        handle: Self::ImageHandle,
+        handle: ImageId,
         x: usize,
         y: usize,
         width: usize,
@@ -638,7 +636,7 @@ impl renderer::Renderer for Renderer {
         }
     }
 
-    fn texture_size(&self, handle: Self::ImageHandle) -> anyhow::Result<(usize, usize)> {
+    fn texture_size(&self, handle: ImageId) -> anyhow::Result<(usize, usize)> {
         if let Some(texture) = self.textures.get(handle) {
             Ok((texture.width, texture.height))
         } else {
@@ -758,7 +756,7 @@ impl renderer::Renderer for Renderer {
 
     fn fill(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         fringe: f32,
@@ -837,7 +835,7 @@ impl renderer::Renderer for Renderer {
 
     fn stroke(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         fringe: f32,
@@ -890,7 +888,7 @@ impl renderer::Renderer for Renderer {
 
     fn triangles(
         &mut self,
-        paint: &Paint<Self::ImageHandle>,
+        paint: &Paint,
         composite_operation: CompositeOperationState,
         scissor: &Scissor,
         vertexes: &[Vertex],

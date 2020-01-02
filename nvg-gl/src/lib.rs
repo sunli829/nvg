@@ -578,26 +578,26 @@ impl renderer::Renderer for Renderer {
         Ok(id)
     }
 
-    fn delete_texture(&mut self, handle: ImageId) -> anyhow::Result<()> {
-        if let Some(texture) = self.textures.get(handle) {
+    fn delete_texture(&mut self, img: ImageId) -> anyhow::Result<()> {
+        if let Some(texture) = self.textures.get(img) {
             unsafe { gl::DeleteTextures(1, &texture.tex) }
-            self.textures.remove(handle);
+            self.textures.remove(img);
             Ok(())
         } else {
-            bail!("texture '{}' not found", handle);
+            bail!("texture '{}' not found", img);
         }
     }
 
     fn update_texture(
         &mut self,
-        handle: ImageId,
+        img: ImageId,
         x: usize,
         y: usize,
         width: usize,
         height: usize,
         data: &[u8],
     ) -> anyhow::Result<()> {
-        if let Some(texture) = self.textures.get(handle) {
+        if let Some(texture) = self.textures.get(img) {
             unsafe {
                 gl::BindTexture(gl::TEXTURE_2D, texture.tex);
                 gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
@@ -632,15 +632,15 @@ impl renderer::Renderer for Renderer {
             }
             Ok(())
         } else {
-            bail!("texture '{}' not found", handle);
+            bail!("texture '{}' not found", img);
         }
     }
 
-    fn texture_size(&self, handle: ImageId) -> anyhow::Result<(usize, usize)> {
-        if let Some(texture) = self.textures.get(handle) {
+    fn texture_size(&self, img: ImageId) -> anyhow::Result<(usize, usize)> {
+        if let Some(texture) = self.textures.get(img) {
             Ok((texture.width, texture.height))
         } else {
-            bail!("texture '{}' not found", handle);
+            bail!("texture '{}' not found", img);
         }
     }
 

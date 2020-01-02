@@ -25,11 +25,11 @@ pub trait Renderer {
         data: Option<&[u8]>,
     ) -> anyhow::Result<ImageId>;
 
-    fn delete_texture(&mut self, handle: ImageId) -> anyhow::Result<()>;
+    fn delete_texture(&mut self, img: ImageId) -> anyhow::Result<()>;
 
     fn update_texture(
         &mut self,
-        handle: ImageId,
+        img: ImageId,
         x: usize,
         y: usize,
         width: usize,
@@ -37,7 +37,7 @@ pub trait Renderer {
         data: &[u8],
     ) -> anyhow::Result<()>;
 
-    fn texture_size(&self, handle: ImageId) -> anyhow::Result<(usize, usize)>;
+    fn texture_size(&self, img: ImageId) -> anyhow::Result<(usize, usize)>;
 
     fn viewport(&mut self, extent: Extent, device_pixel_ratio: f32) -> anyhow::Result<()>;
 

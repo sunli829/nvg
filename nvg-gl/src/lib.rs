@@ -300,7 +300,7 @@ impl Renderer {
         gl::Disable(gl::STENCIL_TEST);
     }
 
-    unsafe fn do_contex_fill(&self, call: &Call) {
+    unsafe fn do_convex_fill(&self, call: &Call) {
         let paths = &self.paths[call.path_offset..call.path_offset + call.path_count];
         self.set_uniforms(call.uniform_offset, call.image);
         for path in paths {
@@ -731,7 +731,7 @@ impl renderer::Renderer for Renderer {
 
                     match call.call_type {
                         CallType::Fill => self.do_fill(&call),
-                        CallType::ConvexFill => self.do_contex_fill(&call),
+                        CallType::ConvexFill => self.do_convex_fill(&call),
                         CallType::Stroke => self.do_stroke(&call),
                         CallType::Triangles => self.do_triangles(&call),
                     }

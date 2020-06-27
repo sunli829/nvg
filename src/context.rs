@@ -1178,6 +1178,7 @@ impl<R: Renderer> Context<R> {
     pub fn text<S: AsRef<str>, P: Into<Point>>(&mut self, pt: P, text: S) -> anyhow::Result<()> {
         let state = self.states.last().unwrap();
         let scale = state.xform.font_scale() * self.device_pixel_ratio;
+        let xform = &state.xform;
         let invscale = 1.0 / scale;
         let pt = pt.into();
 
@@ -1196,10 +1197,22 @@ impl<R: Renderer> Context<R> {
         self.cache.vertexes.clear();
 
         for lc in &self.layout_chars {
-            let lt = Point::new(lc.bounds.min.x * invscale, lc.bounds.min.y * invscale);
-            let rt = Point::new(lc.bounds.max.x * invscale, lc.bounds.min.y * invscale);
-            let lb = Point::new(lc.bounds.min.x * invscale, lc.bounds.max.y * invscale);
-            let rb = Point::new(lc.bounds.max.x * invscale, lc.bounds.max.y * invscale);
+            let lt = xform.transform_point(Point::new(
+                lc.bounds.min.x * invscale,
+                lc.bounds.min.y * invscale,
+            ));
+            let rt = xform.transform_point(Point::new(
+                lc.bounds.max.x * invscale,
+                lc.bounds.min.y * invscale,
+            ));
+            let lb = xform.transform_point(Point::new(
+                lc.bounds.min.x * invscale,
+                lc.bounds.max.y * invscale,
+            ));
+            let rb = xform.transform_point(Point::new(
+                lc.bounds.max.x * invscale,
+                lc.bounds.max.y * invscale,
+            ));
 
             self.cache
                 .vertexes

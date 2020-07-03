@@ -549,7 +549,7 @@ impl<R: Renderer> Context<R> {
     }
 
     pub fn stroke_width(&mut self, width: f32) {
-        self.state_mut().stroke_width = width;
+        self.state_mut().stroke_width = width * self.device_pixel_ratio;
     }
 
     pub fn miter_limit(&mut self, limit: f32) {

@@ -77,7 +77,9 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
         }
 
         ctx.fill_paint(silver);
+
         ctx.text_align(Align::CENTER | Align::BASELINE);
+        ctx.reset_transform();
         ctx.text(
             (dial_center.0, dial_center.1 + dial_radius * 0.7 - font_size),
             &format!(
@@ -88,7 +90,6 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
                 if am { "AM" } else { "PM" }
             ),
         )?;
-
         ctx.text(
             (dial_center.0, dial_center.1 + dial_radius * 0.7),
             &format!("{:4}-{:02}-{:02}", year, month, day),
@@ -96,6 +97,7 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
 
         // draw dial
         ctx.begin_path();
+        ctx.translate(dial_center.0, dial_center.1);
         ctx.circle(origin, dial_radius);
         ctx.stroke_width(3.0);
         ctx.stroke_paint(silver);

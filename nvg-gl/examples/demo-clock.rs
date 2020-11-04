@@ -148,5 +148,5 @@ impl<R: Renderer> demo::Demo<R> for DemoClock {
 }
 
 fn main() {
-    demo::run(DemoClock, "demo-clock").unwrap();
+    demo::run(DemoClock, "demo-clock");
 }

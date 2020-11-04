@@ -296,5 +296,5 @@ fn smooth_mouse(
 }
 
 fn main() {
-    demo::run(DemoCutout::default()).unwrap();
+    demo::run(DemoCutout::default(), "demo-cutout");
 }

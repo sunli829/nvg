@@ -1,3 +1,5 @@
+use glutin::event::{Event, StartCause, WindowEvent};
+use glutin::event_loop::{ControlFlow, EventLoop};
 use nvg::{Align, Color, Context, Renderer};
 use std::time::Instant;
 
@@ -7,18 +9,28 @@ pub trait Demo<R: Renderer> {
         Ok(())
     }
 
-    fn update(&mut self, _width: f32, _height: f32, _ctx: &mut Context<R>) -> anyhow::Result<()> {
+    fn update(
+        &mut self,
+        _width: f32,
+        _height: f32,
+        _ctx: &mut Context<R>
+    ) -> anyhow::Result<()> {
         Ok(())
     }
 
     fn cursor_moved(&mut self, _x: f32, _y: f32) {}
 }
 
-pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
-    let mut el = glutin::EventsLoop::new();
-    let wb =
-        glutin::WindowBuilder::new().with_dimensions(glutin::dpi::LogicalSize::new(1024.0, 768.0));
-    let windowed_context = glutin::ContextBuilder::new().build_windowed(wb, &el)?;
+pub fn run<D: Demo<nvg_gl::Renderer>>(
+    mut demo: D,
+    title: &str
+) -> anyhow::Result<()> {
+    let mut el = EventLoop::new();
+    let wb = glutin::window::WindowBuilder::new()
+        .with_title(format!("nvg - {}", title))
+        .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0));
+    let windowed_context = glutin::ContextBuilder::new()
+        .build_windowed(wb, &el)?;
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
     gl::load_with(|p| windowed_context.get_proc_address(p) as *const _);
 
@@ -31,12 +43,27 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
     let mut total_frames = 0;
     let start_time = Instant::now();
 
-    while loop_ {
-        el.poll_events(|event| match event {
-            glutin::Event::WindowEvent { event, .. } => match event {
-                glutin::WindowEvent::CloseRequested => {
-                    loop_ = false;
+    el.run(move |evt, _, ctrl_flow| {
+        match evt {
+            Event::NewEvents(StartCause::Init) =>
+                *ctrl_flow = ControlFlow::Wait,
+            Event::LoopDestroyed => return,
+            Event::WindowEvent {event, ..} => match event {
+                WindowEvent::CloseRequested => *ctrl_flow = ControlFlow::Exit,
+                WindowEvent::Resized(_psize) => {
+                    //
+                    //
                 }
+                _ => ()
+            }
+            Event::RedrawRequested(_) => {
+                //
+                //
+            }
+            _ => ()
+        }
+    });
+    /*
                 glutin::WindowEvent::Resized(sz) => {
                     windowed_context.resize(glutin::dpi::PhysicalSize {
                         width: sz.width,
@@ -95,6 +122,7 @@ pub fn run<D: Demo<nvg_gl::Renderer>>(mut demo: D) -> anyhow::Result<()> {
 
         windowed_context.swap_buffers().unwrap();
     }
+    */
 
     Ok(())
 }

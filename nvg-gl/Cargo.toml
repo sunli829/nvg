@@ -17,7 +17,7 @@ gl = "0.14.0"
 anyhow = "1.0.26"
 
 [dev-dependencies]
-glutin = "0.21.1"
+glutin = "0.25.1"
 chrono = "0.4.10"
 rand = "0.7.2"
 lazy_static = "1.4.0"

@@ -91,6 +91,5 @@ fn main() {
     demo::run(DemoDraw {
         img: None,
         start_time: Instant::now(),
-    })
-    .unwrap();
+    }, "demo-draw");
 }
